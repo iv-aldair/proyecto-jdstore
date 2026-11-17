@@ -1,0 +1,30 @@
+# Dependencias
+node_modules/
+
+# Variables de entorno
+.env
+
+# Backups
+backend/backups/
+
+# Archivos sensibles
+backend/token.txt
+backend/env_dump.txt
+
+# Scripts de desarrollo/debug temporales
+scratch_*.js
+check_*.js
+
+# Archivos de error/debug
+error*.txt
+errores*.txt
+
+# Builds (se regeneran)
+frontend/dist/
+
+# IDE
+.vscode/
+
+# OS
+.DS_Store
+Thumbs.db

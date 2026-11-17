@@ -1,0 +1,33 @@
+{
+  "name": "jdstore-backend",
+  "version": "2.0.0",
+  "description": "Backend API JD Store v2 – Tienda tecnología Juliaca",
+  "main": "src/app.js",
+  "type": "commonjs",
+  "scripts": {
+    "start": "node src/app.js",
+    "dev": "nodemon src/app.js"
+  },
+  "dependencies": {
+    "axios": "^1.6.7",
+    "bcryptjs": "^2.4.3",
+    "cors": "^2.8.5",
+    "dotenv": "^16.4.1",
+    "exceljs": "^4.4.0",
+    "express": "^4.18.2",
+    "express-rate-limit": "^8.4.1",
+    "express-validator": "^7.0.1",
+    "helmet": "^8.1.0",
+    "joi": "^17.12.1",
+    "jsonwebtoken": "^9.0.2",
+    "multer": "^1.4.5-lts.1",
+    "mysql2": "^3.9.1",
+    "node-cron": "^3.0.3",
+    "nodemailer": "^6.9.9",
+    "number-to-words": "^1.2.4",
+    "xlsx": "^0.18.5"
+  },
+  "devDependencies": {
+    "nodemon": "^3.0.3"
+  }
+}

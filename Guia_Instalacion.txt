@@ -1,0 +1,76 @@
+# Guía de Instalación y Ejecución Local - JDStore
+
+Este documento explica paso a paso cómo instalar y ejecutar el sistema de gestión JDStore en una computadora local.
+
+## 1. Requisitos Previos
+
+Antes de comenzar, asegúrese de tener instalados los siguientes programas en su computadora:
+
+*   **Node.js**: (Versión 18 o superior recomendada). Puede descargarlo desde [https://nodejs.org/](https://nodejs.org/).
+*   **MySQL**: Base de datos para almacenar la información. Puede instalarlo usando XAMPP, WAMP o directamente el servidor MySQL.
+*   **Git** (Opcional, pero recomendado para control de versiones).
+
+## 2. Preparación de la Base de Datos
+
+1.  Abra su gestor de base de datos MySQL (por ejemplo, phpMyAdmin, DBeaver o MySQL Workbench).
+2.  Cree una nueva base de datos vacía llamada `jdstore`.
+3.  *Nota: El sistema se encargará de crear las tablas automáticamente cuando se ejecute por primera vez (gracias a Sequelize).*
+
+## 3. Configuración del Backend
+
+El backend está construido con Node.js y Express.
+
+1.  Abra una terminal o línea de comandos.
+2.  Navegue hasta la carpeta `backend` del proyecto:
+    ```bash
+    cd ruta/a/tu/proyecto/backend
+    ```
+3.  Instale las dependencias del proyecto ejecutando:
+    ```bash
+    npm install
+    ```
+4.  Verifique que el archivo `.env` exista en la raíz de la carpeta `backend` y contenga la configuración correcta para conectarse a su base de datos local. Debería verse similar a esto:
+    ```env
+    PORT=3000
+    DB_HOST=localhost
+    DB_USER=root
+    DB_PASSWORD=su_contraseña_aqui
+    DB_NAME=jdstore
+    JWT_SECRET=una_clave_secreta_segura
+    ```
+5.  Inicie el servidor backend ejecutando:
+    ```bash
+    npm run dev
+    ```
+    *Debería ver un mensaje indicando que el servidor está corriendo en el puerto 3000 y que la base de datos se ha conectado.*
+
+## 4. Configuración del Frontend
+
+El frontend está construido con React y Vite.
+
+1.  Abra una **nueva** terminal (manteniendo abierta la del backend).
+2.  Navegue hasta la carpeta `frontend` del proyecto:
+    ```bash
+    cd ruta/a/tu/proyecto/frontend
+    ```
+3.  Instale las dependencias del proyecto ejecutando:
+    ```bash
+    npm install
+    ```
+4.  Verifique que el archivo `.env` exista en la raíz de la carpeta `frontend` y que apunte correctamente al backend local:
+    ```env
+    VITE_API_URL=http://localhost:3000/api
+    ```
+5.  Inicie la aplicación frontend ejecutando:
+    ```bash
+    npm run dev
+    ```
+    *Debería ver un mensaje indicando que Vite está corriendo, normalmente en `http://localhost:5173/`.*
+
+## 5. Acceso al Sistema
+
+1.  Abra su navegador web favorito (Chrome, Firefox, Edge, etc.).
+2.  Ingrese a la dirección que le proporcionó la terminal del frontend (por defecto, `http://localhost:5173/`).
+3.  Verá la pantalla de inicio de sesión de JDStore. 
+
+¡El sistema ya está listo para ser utilizado localmente!

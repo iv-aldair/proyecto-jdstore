@@ -1,0 +1,90 @@
+{
+  "name": "Chatbot Asesor Comercial Entrenado — JD Store S.C.R.L.",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "jdstore-chatbot",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "id": "1a2b3c4d-0001-4000-8000-000000000001",
+      "name": "1. Webhook Web JDStore",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [180, 300],
+      "webhookId": "jdstore-chatbot"
+    },
+    {
+      "parameters": {
+        "url": "http://localhost:3000/api/public/n8n-context",
+        "options": {}
+      },
+      "id": "1a2b3c4d-0002-4000-8000-000000000002",
+      "name": "2. Consultar BD MySQL JDStore",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [420, 300]
+    },
+    {
+      "parameters": {
+        "jsCode": "// ============================================================================\n// NODO 3: AGENTE COMERCIAL ENTRENADO (RESPUESTAS NATURALES + PROMPT MAESTRO)\n// ============================================================================\nconst webhookData = $('1. Webhook Web JDStore').first().json.body || {};\nconst preguntaUsuario = webhookData.mensaje || 'Hola';\nconst sesionId = webhookData.sesion_id || 'jdstore-session';\nconst ultimosProductos = webhookData.ultimos_productos_vistos || [];\n\nconst dataBD = $input.first().json;\nconst inst = dataBD.institucion || {};\nconst tiendas = dataBD.sucursales || [];\nconst productos = (dataBD.catalogo_productos || []).filter(p => Number(p.stock_total) > 0);\nconst numWsp = (inst.whatsapp || '51951234567').replace(/\\D/g, '');\n\nconst textoLower = preguntaUsuario.toLowerCase()\n  .replace(/(\\d+(?:[.,]\\d+)?)\\s*mil/g, (_, n) => String(Math.round(parseFloat(n.replace(',', '.')) * 1000)))\n  .replace(/\\bmil\\b/g, '1000');\n\nif (textoLower.includes('como puedo realizar la compra') || textoLower.includes('como compro') || textoLower.includes('cómo compro') || textoLower.includes('quiero comprar') || (textoLower.includes('compra') && textoLower.includes('como'))) {\n  const prod = ultimosProductos[0];\n  const link = prod\n    ? `https://wa.me/${numWsp}?text=${encodeURIComponent('Hola JD Store, deseo comprar ' + prod.nombre)}`\n    : `https://wa.me/${numWsp}?text=${encodeURIComponent('Hola JD Store, deseo realizar una compra')}`;\n  return [{\n    json: {\n      ok: true,\n      respuesta: `¡Comprar en **JD Store** es muy fácil y seguro! Puedes hacerlo de **3 formas**:\\n\\n1️⃣ **Por WhatsApp (Atención inmediata):** Haz clic en el botón verde de aquí abajo o escríbenos al **${inst.telefono_central || '951 234 567'}**.\\n2️⃣ **Desde la página web:** Haz clic sobre el producto y presiona **Compra vía WhatsApp** o **Añadir al Carrito**.\\n3️⃣ **En nuestras tiendas:** Visítanos en **Jr. Noriega 342, Juliaca** o en **Puno**.\\n\\n💳 **Medios de pago:** Efectivo, **Yape, Plin**, Transferencia (BCP, BBVA, Interbank) y Tarjetas.\\n\\n[Comprar ahora por WhatsApp](${link})`,\n      sesion_id: sesionId,\n      origen: 'n8n-trained-agent'\n    }\n  }];\n}\n\nlet cat = null;\nif (textoLower.includes('impresora') || textoLower.includes('multifuncional') || textoLower.includes('ecotank') || textoLower.includes('pixma') || textoLower.includes('laserjet')) cat = 'impresora';\nelse if (textoLower.includes('laptop') || textoLower.includes('portatil') || textoLower.includes('portátil') || textoLower.includes('notebook')) cat = 'laptop';\nelse if (textoLower.includes('monitor') || textoLower.includes('pantalla')) cat = 'monitor';\nelse if (textoLower.includes('computadora') || textoLower.includes('pc') || textoLower.includes('all-in-one')) cat = 'computadora';\nelse if (textoLower.includes('tinta') || textoLower.includes('toner') || textoLower.includes('tóner')) cat = 'tinta';\nelse if (textoLower.includes('teclado') || textoLower.includes('mouse')) cat = 'teclado';\nelse if (textoLower.includes('memoria') || textoLower.includes('ram') || textoLower.includes('ssd')) cat = 'memoria';\n\nconst esGaming = textoLower.includes('gaming') || textoLower.includes('gamer') || textoLower.includes('juego');\nif (!cat && esGaming) cat = 'laptop';\n\nlet minPrecio = null;\nlet maxPrecio = null;\nconst mMin = textoLower.match(/(?:a partir de|mas de|más de|mayor(?:es)? (?:a|de|que)|arriba de|desde|superior(?:es)? a)\\s*(?:s\\/.?\\s*)?(\\d+)/);\nif (mMin) minPrecio = Number(mMin[1]);\nconst mMax = textoLower.match(/(?:menos de|menor(?:es)? (?:a|de|que)|hasta|por debajo de|maximo|máximo)\\s*(?:s\\/.?\\s*)?(\\d+)/);\nif (mMax) maxPrecio = Number(mMax[1]);\n\nlet filtrados = [...productos];\nif (cat) {\n  filtrados = filtrados.filter(p => p.nombre_categoria.toLowerCase().includes(cat) || p.nombre.toLowerCase().includes(cat));\n} else if (ultimosProductos.length > 0) {\n  filtrados = [...ultimosProductos];\n}\n\nif (esGaming && cat === 'laptop') {\n  const gamers = filtrados.filter(p => `${p.nombre} ${p.modelo} ${p.descripcion}`.toLowerCase().match(/victus|gamer|gaming|gtx|rtx/));\n  if (gamers.length > 0) filtrados = gamers;\n}\n\nif (minPrecio !== null) filtrados = filtrados.filter(p => Number(p.precio) >= minPrecio);\nif (maxPrecio !== null) filtrados = filtrados.filter(p => Number(p.precio) <= maxPrecio);\nfiltrados.sort((a, b) => Number(b.precio) - Number(a.precio));\n\nconst topOpciones = filtrados.slice(0, 3);\nlet respuesta = '';\nif (topOpciones.length > 0) {\n  const top1 = topOpciones[0];\n  const link = `https://wa.me/${numWsp}?text=${encodeURIComponent('Hola JD Store, deseo comprar ' + top1.nombre)}`;\n  respuesta = `¡Claro! Estas son las mejores opciones disponibles hoy para ti:\\n\\n` +\n    topOpciones.map((p, i) => `${i === 0 ? '🏆 **1.' : i === 1 ? '✨ **2.' : '🔹 **3.'} ${p.nombre}** (${p.modelo}) — **S/ ${Number(p.precio).toFixed(2)}**\\n  • ${p.descripcion || p.nombre_marca}\\n  • Disponible en tienda (${p.stock_total} und.)`).join('\\n\\n') +\n    `\\n\\n[Comprar ${top1.nombre} vía WhatsApp](${link})`;\n} else {\n  respuesta = `¡Con gusto te ayudo! En **${inst.nombre_institucion || 'JD Store'}** tenemos laptops, impresoras, monitores y accesorios listos para entrega inmediata en Juliaca y Puno. ¿Qué equipo estás buscando hoy?`;\n}\n\nreturn [{ json: { ok: true, respuesta, sesion_id: sesionId, origen: 'n8n-trained-agent' } }];"
+      },
+      "id": "1a2b3c4d-0003-4000-8000-000000000003",
+      "name": "3. Asesor IA Entrenado (Prompt + Memoria)",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [680, 300]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ $json }}",
+        "options": {}
+      },
+      "id": "1a2b3c4d-0004-4000-8000-000000000004",
+      "name": "4. Responder al Portal Web",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [940, 300]
+    }
+  ],
+  "connections": {
+    "1. Webhook Web JDStore": {
+      "main": [
+        [
+          {
+            "node": "2. Consultar BD MySQL JDStore",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "2. Consultar BD MySQL JDStore": {
+      "main": [
+        [
+          {
+            "node": "3. Asesor IA Entrenado (Prompt + Memoria)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "3. Asesor IA Entrenado (Prompt + Memoria)": {
+      "main": [
+        [
+          {
+            "node": "4. Responder al Portal Web",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  }
+}

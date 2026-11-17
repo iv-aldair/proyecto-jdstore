@@ -1,0 +1,39 @@
+Manual de Infraestructura y Red (JD Store)
+Este manual te guiará paso a paso para configurar tu red privada usando Tailscale, permitiendo que las 3 tiendas y tu laptop personal se conecten al servidor físico de manera 100% segura.
+
+¿Se requiere Linux o un sistema especial?
+¡No! Puedes usar Windows 10 o Windows 11 sin ningún problema. De hecho, para el entorno de tiendas comerciales, usar una laptop o PC de escritorio con Windows es lo más rápido, económico y fácil de mantener. Tailscale funciona perfectamente en Windows.
+
+FASE 1: Preparar el Servidor Central (Tienda Jr. Moquegua)
+Asumiremos que la laptop que está en Jr. Moquegua (encendida de 8am a 9pm) será el "Servidor". Esta computadora tendrá encendido el XAMPP (MySQL) y las consolas negras de Node.js (Backend) y Vite (Frontend).
+
+En esta laptop, abre el navegador y ve a tailscale.com.
+Haz clic en "Sign Up" (Arriba a la derecha) y regístrate usando tu cuenta de Google (Gmail). IMPORTANTE: Usa una cuenta de correo segura a la que solo tú tengas acceso, ya que esa cuenta será la llave maestra de la red.
+Descarga el instalador para Windows e instálalo.
+Aparecerá un icono de Tailscale en la barra de tareas (abajo a la derecha, cerca del reloj). Haz clic derecho sobre él y dale a "Log In".
+Te abrirá una ventana del navegador para iniciar sesión con tu cuenta de Google. Acéptalo.
+Una vez logueado, haz clic derecho otra vez en el icono de Tailscale en la barra de tareas. Verás en la parte superior tu nueva IP Mágica (empieza con 100.x.x.x). 👉 Copia esa IP y anótala, por ejemplo: 100.115.50.20. Esa es tu IP de Servidor impenetrable.
+FASE 2: Configurar las PCs de las Sucursales
+Ve a la PC de la segunda tienda (la que está una cuadra más abajo) y repite el proceso:
+
+Ve a tailscale.com y descarga el instalador de Windows.
+Haz clic derecho en el icono e inicia sesión (debes usar exactamente la misma cuenta de Google que usaste en el Servidor).
+Una vez logueado, esa PC de la sucursal ya es parte de tu red LAN invisible.
+¿Cómo acceden al sistema? En lugar de escribir localhost:5173, el vendedor de esa sucursal abrirá Google Chrome y escribirá en la barra de direcciones: http://100.115.50.20:5173 (Reemplazando los números por la IP Mágica del Servidor que anotaste en la Fase 1).
+
+¡Listo! El sistema cargará a la perfección.
+
+(Repite esta Fase 2 en la tercera sucursal).
+
+FASE 3: Tu Laptop de Monitoreo (El Programador)
+Si tú estás en tu casa o de viaje en otra ciudad y quieres revisar la base de datos o arreglar un error de código:
+
+Instala Tailscale en tu laptop personal.
+Inicia sesión con la misma cuenta de Google.
+Podrás abrir el sistema de JD Store ingresando a http://100.115.50.20:5173 desde tu casa.
+Si necesitas conectarte a la base de datos con DBeaver o phpMyAdmin, simplemente pones 100.115.50.20 como el Host en lugar de localhost.
+🔒 Beneficios de Seguridad de esta Arquitectura
+Cero Puertos Abiertos: Si un hacker de Rusia intenta escanear la IP pública del internet de Jr. Moquegua, no encontrará NADA. El router de la tienda estará completamente cerrado.
+Encriptación de Extremo a Extremo (WireGuard): Toda la información de ventas, dinero y clientes viaja por internet en un túnel encriptado. Nadie en medio puede robar los datos.
+Bloqueo contra bots (Implementado hoy): En el código (backend app.js), ya te acabo de programar Helmet y Express-Rate-Limit. Si por algún motivo alguien dentro de la red intenta bombardear la API con miles de peticiones para tumbar la base de datos, el sistema lo bloqueará temporalmente.
+Desconexión remota: Como programador, si alguna vez sospechas que la PC de una tienda tiene virus, entras al panel de administrador de tailscale.com desde tu celular, le das "Remover" a esa PC, y automáticamente quedará desconectada del sistema sin afectar al servidor
